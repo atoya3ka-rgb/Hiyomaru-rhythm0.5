@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ひよまるくん リズムゲーム試作 v0.5</title>
+<title>ひよまるくん リズムゲーム試作 v0.5.1</title>
 <style>
 :root{
   --ink:#5a5c86;
@@ -251,10 +251,10 @@ button:active{transform:translateY(1px)}
   background-repeat:no-repeat !important;
   transition:opacity .42s ease, filter .42s ease;
 }
-#sceneLayer.scene-room{background-image:url("assets/bg_room.png") !important;}
-#sceneLayer.scene-beach{background-image:url("assets/bg_beach.png") !important;}
-#sceneLayer.scene-forest{background-image:url("assets/bg_forest.png") !important;}
-#sceneLayer.scene-lighthouse{background-image:url("assets/bg_lighthouse.png") !important;}
+#sceneLayer.scene-room{background-image:url("https://atoya3ka-rgb.github.io/Hiyomaru-rhythm0.5/bg_room.png") !important;}
+#sceneLayer.scene-beach{background-image:url("https://atoya3ka-rgb.github.io/Hiyomaru-rhythm0.5/bg_beach.png") !important;}
+#sceneLayer.scene-forest{background-image:url("https://atoya3ka-rgb.github.io/Hiyomaru-rhythm0.5/bg_forest.png") !important;}
+#sceneLayer.scene-lighthouse{background-image:url("https://atoya3ka-rgb.github.io/Hiyomaru-rhythm0.5/bg_lighthouse.png") !important;}
 
 /* 背景画像が主役なので、旧ボーン背景の小物は非表示 */
 #sceneLayer > *{display:none !important;}
@@ -274,12 +274,32 @@ button:active{transform:translateY(1px)}
   );
 }
 
+
+/* ===== v0.5.1 GitHub Pages absolute-background fix ===== */
+#sceneLayer.scene-room {
+  background: url("https://atoya3ka-rgb.github.io/Hiyomaru-rhythm0.5/bg_room.png") center center / cover no-repeat !important;
+}
+#sceneLayer.scene-beach {
+  background: url("https://atoya3ka-rgb.github.io/Hiyomaru-rhythm0.5/bg_beach.png") center center / cover no-repeat !important;
+}
+#sceneLayer.scene-forest {
+  background: url("https://atoya3ka-rgb.github.io/Hiyomaru-rhythm0.5/bg_forest.png") center center / cover no-repeat !important;
+}
+#sceneLayer.scene-lighthouse {
+  background: url("https://atoya3ka-rgb.github.io/Hiyomaru-rhythm0.5/bg_lighthouse.png") center center / cover no-repeat !important;
+}
+#sceneLayer::before,
+#sceneLayer::after {
+  display:none !important;
+  content:none !important;
+}
+
 </style>
 </head>
 <body>
 <div id="app">
   <div class="topbar">
-    <div class="title">ひよまるくん リズムゲーム試作 v0.5</div>
+    <div class="title">ひよまるくん リズムゲーム試作 v0.5.1</div>
     <div class="meta">
       <span class="badge">コンパクト正方形UI</span><span class="badge">4面 × 15秒</span>
       <span class="badge">BGM v1入り</span>
@@ -685,7 +705,7 @@ async function startGame(){
 </script>
 
 <audio id="bgm" preload="auto">
-  <source src="assets/hiyomaru_60s_bgm_v1.m4a" type="audio/mp4">
+  <source src="https://atoya3ka-rgb.github.io/Hiyomaru-rhythm0.5/hiyomaru_60s_bgm_v1.m4a" type="audio/mp4">
 </audio>
 
 </body>
