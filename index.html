@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ひよまるくん リズムゲーム試作 v0.5</title>
+<style>
+:root{
+  --ink:#5a5c86;
+  --panel:#ffffffdd;
+  --line:#dcd8ff;
+  --pink:#ff9fc8;
+  --blue:#8fd8ff;
+  --yellow:#ffd76a;
+  --green:#a9e6a3;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;color:var(--ink);background:#f7f1ff}
+body{display:flex;justify-content:center;padding:8px;touch-action:manipulation;-webkit-text-size-adjust:100%;overscroll-behavior:none}
+#app{width:min(94vw,620px)}
+.topbar{
+  width:min(88vw,560px);margin:0 auto 8px;display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  background:var(--panel);border:2px solid var(--line);border-radius:18px;padding:10px 14px;margin-bottom:10px
+}
+.title{font-weight:800;font-size:18px}
+.meta{display:flex;gap:8px;flex-wrap:wrap;font-size:13px}
+.badge{background:#fff;border:2px solid #ece9ff;border-radius:999px;padding:5px 10px}
+#game{
+  position:relative;overflow:hidden;aspect-ratio:1/1;min-height:0;width:min(88vw,560px);margin:0 auto;
+  border:3px solid #e3ddff;border-radius:26px;background:#eee;box-shadow:0 14px 28px #6c65a015
+}
+.stage{position:absolute;inset:0;transition:opacity .45s ease}
+.stage.hidden{opacity:0;pointer-events:none}
+#sceneLayer{position:absolute;inset:0}
+
+/* -------- backgrounds -------- */
+.scene-room{background:linear-gradient(#ead8ff,#ffe6d6)}
+.scene-room:before,.scene-room:after{content:"";position:absolute;top:0;width:34%;height:44%;background:#b889c950}
+.scene-room:before{left:0;clip-path:polygon(0 0,100% 0,0 100%)}
+.scene-room:after{right:0;clip-path:polygon(0 0,100% 0,100% 100%)}
+.window{position:absolute;left:50%;top:8%;transform:translateX(-50%);width:26%;height:26%;border:9px solid #d59db3;border-radius:34px;background:#aee2ff}
+.window:before,.window:after{content:"";position:absolute;background:#d59db3}
+.window:before{width:8px;height:100%;left:50%}
+.window:after{height:8px;width:100%;top:50%}
+.floor{position:absolute;left:0;right:0;bottom:0;height:34%;background:repeating-linear-gradient(90deg,#deb98b 0 30px,#e7c69c 30px 60px)}
+.rug{position:absolute;left:50%;bottom:8%;transform:translateX(-50%);width:48%;height:18%;border-radius:50%;background:#f8ecff;border:7px solid #eddcff}
+.bed{position:absolute;left:8%;bottom:27%;width:24%;height:13%;background:#ccb5ef;border-radius:20px}
+.shelf{position:absolute;right:8%;bottom:24%;width:13%;height:27%;background:#b98ca2;border-radius:12px}
+.lamp{position:absolute;left:6%;bottom:37%;width:5%;aspect-ratio:1;border-radius:50%;background:#ffe07a;box-shadow:0 0 28px #ffe9a4}
+
+.scene-beach{background:linear-gradient(#bfeaff 0 38%,#7ed9ef 38% 67%,#f4d99f 67%)}
+.scene-beach .rug{background:#fff0c8;border-color:#f3d7a0}
+.palm{position:absolute;right:10%;bottom:29%;width:18px;height:37%;background:#b98555;transform:rotate(3deg);transform-origin:bottom}
+.palm:before{content:"";position:absolute;left:50%;top:-15px;width:150px;height:100px;transform:translateX(-50%);background:#79d27c;clip-path:polygon(50% 50%,0 0,43% 40%,35% 0,49% 40%,55% 0,55% 41%,100% 8%,63% 47%,100% 60%,61% 54%,72% 100%,53% 59%,32% 100%,46% 55%,0 64%,42% 50%)}
+.shell{position:absolute;width:20px;height:12px;border-radius:50% 50% 30% 30%;background:#ffc4d8;border:2px solid #e9a9bf}
+.wave{position:absolute;left:0;right:0;top:61%;height:16px;background:radial-gradient(35px 12px at 35px 0,#fff 98%,transparent 100%) 0 0/70px 16px repeat-x;opacity:.7}
+
+.scene-forest{background:linear-gradient(#505991,#8d76aa 55%,#486b60)}
+.moon{position:absolute;left:12%;top:8%;width:9%;aspect-ratio:1;border-radius:50%;background:#fff3bd;box-shadow:0 0 25px #fff0b260}
+.moon:after{content:"";position:absolute;width:82%;height:82%;border-radius:50%;background:#59649b;left:36%;top:-5%}
+.tree{position:absolute;bottom:21%;width:90px;height:43%;background:#36574c;border-radius:50% 50% 14% 14%}
+.tree:after{content:"";position:absolute;left:40%;bottom:-25%;width:20%;height:42%;background:#2d493f}
+.owl{position:absolute;right:13%;top:17%;width:44px;height:36px;border-radius:50%;background:#28344d}
+.owl:before,.owl:after{content:"";position:absolute;top:10px;width:8px;height:8px;border-radius:50%;background:#fff6bd}
+.owl:before{left:9px}.owl:after{right:9px}
+.scene-forest .rug{background:#d9f1dd;border-color:#b8dbbf}
+
+.scene-lighthouse{background:linear-gradient(#ffdcbf 0 36%,#aee0f7 36% 67%,#d9d0c2 67%)}
+.sun{position:absolute;left:10%;top:8%;width:10%;aspect-ratio:1;border-radius:50%;background:#fff0aa;box-shadow:0 0 35px #ffe7a980}
+.lighthouse{position:absolute;right:15%;bottom:39%;width:58px;height:34%;background:repeating-linear-gradient(#fff 0 58px,#ff9eac 58px 80px);border:3px solid #bda9af}
+.lighthouse:before{content:"";position:absolute;left:-10px;right:-10px;top:-28px;height:28px;background:#dc5c6f;border-radius:8px 8px 0 0}
+.lighthouse:after{content:"";position:absolute;left:12px;right:12px;top:-50px;height:24px;border-radius:50%;background:#fff0a9;border:3px solid #bdaa85}
+.tetrapod{position:absolute;width:48px;height:20px;border-radius:50%;background:#8793a7}
+.tetrapod:before,.tetrapod:after{content:"";position:absolute;background:#8793a7}
+.tetrapod:before{left:17px;top:-14px;width:14px;height:48px}
+.tetrapod:after{left:5px;top:5px;width:38px;height:12px}
+.scene-lighthouse .rug{background:#f3eefb;border-color:#dad1ed}
+
+/* -------- character -------- */
+#characterWrap{
+  position:absolute;left:50%;bottom:21%;width:25%;min-width:110px;aspect-ratio:1;
+  transform:translateX(-50%);transition:transform .18s ease,filter .15s ease
+}
+#character{position:absolute;inset:0;transform-origin:50% 68%;transition:transform .18s ease}
+.shadow{position:absolute;left:25%;right:25%;bottom:4%;height:8%;background:#5b66802d;border-radius:50%}
+.body{
+  position:absolute;left:22%;top:22%;width:56%;height:63%;border-radius:48% 48% 46% 46%;
+  background:#fff;border:4px solid #5363a4
+}
+.hat{
+  position:absolute;left:18%;top:10%;width:62%;height:24%;border-radius:50%;
+  background:#fff;border:4px solid #5363a4;transform:rotate(-7deg)
+}
+.hat:before{
+  content:"";position:absolute;left:4%;right:4%;bottom:3%;height:43%;border-radius:0 0 60% 60%;
+  background:#3db9ff
+}
+.hat:after{
+  content:"";position:absolute;right:14%;bottom:20%;width:18%;height:28%;
+  background:#3db9ff;border:3px solid #5363a4;transform:rotate(-15deg);
+  clip-path:polygon(50% 0,100% 45%,70% 100%,14% 83%,0 33%)
+}
+.eye{position:absolute;top:43%;width:4.8%;aspect-ratio:1;border-radius:50%;background:#334383}
+.eye.left{left:40%}.eye.right{right:40%}
+.blush{position:absolute;top:51%;width:9%;height:6%;border-radius:50%;background:#f8bfd8aa}
+.blush.left{left:31%}.blush.right{right:31%}
+.beak{
+  position:absolute;left:46%;top:49%;width:8%;height:8%;background:#f5b441;border:2px solid #d89324;
+  transform:rotate(45deg);border-radius:2px
+}
+.wing{
+  position:absolute;top:48%;width:20%;height:28%;background:#fff;border:4px solid #5363a4;border-radius:70% 35% 60% 40%;
+  transform-origin:50% 10%;transition:transform .18s ease
+}
+.wing.left{left:12%;transform:rotate(12deg)}
+.wing.right{right:12%;transform:scaleX(-1) rotate(12deg)}
+.foot{position:absolute;bottom:5%;width:6%;height:10%;border-radius:50%;background:#edbe3e;border:2px solid #d29b22}
+.foot.left{left:40%;transform:rotate(-8deg)}.foot.right{right:40%;transform:rotate(8deg)}
+#fx{position:absolute;inset:-20%;pointer-events:none;opacity:0;transition:opacity .12s}
+.spark{position:absolute;width:16px;height:16px;background:#ffe074;clip-path:polygon(50% 0,62% 37%,100% 50%,62% 63%,50% 100%,38% 63%,0 50%,38% 37%)}
+.spark.s1{left:8%;top:36%}.spark.s2{right:7%;top:44%;background:#9ee4ff}.spark.s3{left:47%;top:0;background:#ffb7d5}
+#feedback{
+  position:absolute;left:50%;top:16%;transform:translateX(-50%);font-size:clamp(22px,4vw,38px);font-weight:900;
+  text-shadow:0 3px 0 #fff,0 0 12px #fff;opacity:0;transition:opacity .12s,transform .12s
+}
+#feedback.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
+#feedback.good{color:#ff78ad} #feedback.miss{color:#8890aa}
+
+/* -------- targets and notes -------- */
+.target{
+  position:absolute;width:64px;height:64px;border-radius:22px;background:#ffffffd9;border:4px solid #e6e0ff;
+  display:grid;place-items:center;font-size:38px;font-weight:900;box-shadow:0 8px 18px #544a7818;
+  user-select:none;-webkit-user-select:none;touch-action:manipulation;z-index:8
+}
+.target.active{transform:scale(1.08);box-shadow:0 0 0 6px #fff9,0 0 24px #ffd36c}
+#t-up{left:50%;top:25%;transform:translateX(-50%)}
+#t-down{left:50%;bottom:7%;transform:translateX(-50%)}
+#t-left{left:20%;top:55%;transform:translate(-50%,-50%)}
+#t-right{right:20%;top:55%;transform:translate(50%,-50%)}
+.note{
+  position:absolute;width:46px;height:46px;border-radius:14px;background:#fff;border:4px solid currentColor;
+  display:grid;place-items:center;font-size:28px;font-weight:900;z-index:7;pointer-events:none;
+  box-shadow:0 5px 12px #554b7c20
+}
+.note.left{color:#ff79ad}.note.right{color:#70cf72}.note.up{color:#f5b64d}.note.down{color:#7c9fff}
+#hud{
+  position:absolute;left:14px;right:14px;top:12px;display:flex;justify-content:space-between;gap:10px;z-index:10;pointer-events:none
+}
+.hudbox{background:#ffffffdc;border:2px solid #e9e4ff;border-radius:16px;padding:7px 11px;font-weight:800;font-size:13px}
+#magicWrap{
+  position:absolute;left:50%;top:12px;transform:translateX(-50%);width:min(40%,310px);height:18px;
+  background:#ffffffcc;border:3px solid #e8e2ff;border-radius:999px;overflow:hidden;z-index:10
+}
+#magicBar{height:100%;width:0%;background:linear-gradient(90deg,#8fd8ff,#ffb2d3,#ffd76a);transition:width .2s ease}
+#startOverlay,#resultOverlay{
+  position:absolute;inset:0;z-index:30;display:grid;place-items:center;background:#f8f2ffdd;backdrop-filter:blur(5px)
+}
+#resultOverlay{display:none}
+.card{
+  width:min(86%,520px);background:#fffffff0;border:3px solid #dfd8ff;border-radius:28px;padding:24px;text-align:center;
+  box-shadow:0 20px 48px #544b7b25
+}
+.card h1,.card h2{margin:0 0 10px;color:#6875c8}
+.card p{line-height:1.7}
+button{
+  border:0;border-radius:999px;padding:13px 24px;font-size:17px;font-weight:900;background:#7aa9ff;color:#fff;
+  box-shadow:0 8px 18px #7aa9ff42;cursor:pointer
+}
+button:active{transform:translateY(1px)}
+.popcorn{font-size:72px;margin:8px}
+.flower{font-size:86px;margin:8px}
+.smallnote{font-size:12px;color:#777b99}
+@media(max-width:700px){
+  body{padding:6px}
+  #app{width:100%}
+  .topbar{
+    width:min(88vw,520px);
+    padding:6px 8px;
+    margin:0 auto 6px;
+  }
+  .title{font-size:13px}
+  .meta{gap:4px}
+  .badge{font-size:10px;padding:3px 6px}
+  #game{
+    width:min(88vw,520px);
+    aspect-ratio:1/1;
+    margin:0 auto;
+  }
+  .target{
+    width:52px;
+    height:52px;
+    font-size:26px;
+    border-radius:16px;
+    border-width:3px;
+  }
+  #t-up{top:24%}
+  #t-left{left:20%;top:55%}
+  #t-right{right:20%;top:55%}
+  #t-down{bottom:7%}
+  #characterWrap{
+    width:24%;
+    min-width:96px;
+    bottom:21%;
+  }
+  .hudbox{font-size:10px;padding:4px 7px}
+  #hud{left:8px;right:8px;top:7px}
+  #magicWrap{top:8px;width:36%;height:14px}
+  .card{width:88%;padding:16px}
+  .card h1{font-size:24px}
+  .card p{font-size:13px}
+  button{padding:11px 20px;font-size:15px}
+}
+  .topbar{padding:8px 10px;margin-bottom:6px}
+  .title{font-size:15px}
+  .badge{font-size:11px;padding:4px 7px}
+  #game{width:100%;aspect-ratio:1/1}
+  .target{width:58px;height:58px;font-size:29px;border-radius:18px}
+  #t-up{top:24%}
+  #t-left{left:14%;top:55%}
+  #t-right{right:14%;top:55%}
+  #t-down{bottom:7%}
+  #characterWrap{width:29%;min-width:120px;bottom:21%}
+  .hudbox{font-size:11px;padding:5px 8px}
+  #magicWrap{top:10px;width:38%}
+  .card{width:90%;padding:18px}
+}
+  .target{width:64px;height:64px;font-size:32px;border-radius:19px}
+  #t-left{left:17%} #t-right{right:17%}
+  #characterWrap{width:31%}
+}
+
+#countdownOverlay{position:absolute;inset:0;z-index:26;display:none;place-items:center;pointer-events:none;background:rgba(250,246,255,.16)}
+#countdownText{font-size:clamp(74px,18vw,150px);font-weight:1000;color:#fff;text-shadow:0 5px 0 #7787d8,0 0 18px #fff,0 0 34px #ffb9dc;transform:scale(.76);opacity:0}
+#countdownText.pop{animation:countPop .72s ease both}
+#countdownText.go{color:#fff7a8;text-shadow:0 5px 0 #f29b62,0 0 18px #fff,0 0 36px #ffd67e}
+@keyframes countPop{0%{transform:scale(.58);opacity:0}24%{transform:scale(1.13);opacity:1}68%{transform:scale(1);opacity:1}100%{transform:scale(.92);opacity:0}}
+
+
+@media(max-width:390px){
+  .topbar{width:86vw}
+  #game{width:86vw}
+  .target{width:48px;height:48px;font-size:24px}
+  #characterWrap{width:23%;min-width:88px}
+}
+
+
+/* ===== v0.5 本番候補背景 ===== */
+#sceneLayer{
+  background-position:center center !important;
+  background-size:cover !important;
+  background-repeat:no-repeat !important;
+  transition:opacity .42s ease, filter .42s ease;
+}
+#sceneLayer.scene-room{background-image:url("assets/bg_room.png") !important;}
+#sceneLayer.scene-beach{background-image:url("assets/bg_beach.png") !important;}
+#sceneLayer.scene-forest{background-image:url("assets/bg_forest.png") !important;}
+#sceneLayer.scene-lighthouse{background-image:url("assets/bg_lighthouse.png") !important;}
+
+/* 背景画像が主役なので、旧ボーン背景の小物は非表示 */
+#sceneLayer > *{display:none !important;}
+
+/* UIの可読性を少しだけ上げる */
+#sceneLayer:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(
+    to bottom,
+    rgba(255,255,255,.04) 0%,
+    rgba(255,255,255,0) 34%,
+    rgba(255,255,255,.025) 68%,
+    rgba(255,255,255,.07) 100%
+  );
+}
+
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="title">ひよまるくん リズムゲーム試作 v0.5</div>
+    <div class="meta">
+      <span class="badge">コンパクト正方形UI</span><span class="badge">4面 × 15秒</span>
+      <span class="badge">BGM v1入り</span>
+      <span class="badge">タップ / 矢印キー</span>
+    </div>
+  </div>
+
+  <div id="game">
+    <div id="sceneLayer" class="stage scene-room"></div>
+
+    <div id="hud">
+      <div class="hudbox" id="stageLabel">1面：ひよまるくんの部屋</div>
+      <div class="hudbox" id="timerLabel">0.0 / 60.0</div>
+    </div>
+    <div id="magicWrap"><div id="magicBar"></div></div>
+
+    <div id="characterWrap">
+      <div class="shadow"></div>
+      <div id="character">
+        <div class="wing left"></div>
+        <div class="wing right"></div>
+        <div class="body"></div>
+        <div class="hat"></div>
+        <div class="eye left"></div><div class="eye right"></div>
+        <div class="blush left"></div><div class="blush right"></div>
+        <div class="beak"></div>
+        <div class="foot left"></div><div class="foot right"></div>
+        <div id="fx"><i class="spark s1"></i><i class="spark s2"></i><i class="spark s3"></i></div>
+      </div>
+    </div>
+
+    <div id="feedback">ぴったり！</div>
+
+    <div id="t-up" class="target" data-dir="up">↑</div>
+    <div id="t-left" class="target" data-dir="left">←</div>
+    <div id="t-right" class="target" data-dir="right">→</div>
+    <div id="t-down" class="target" data-dir="down">↓</div>
+
+    <div id="countdownOverlay"><div id="countdownText">3</div></div>
+
+    <div id="startOverlay">
+      <div class="card">
+        <h1>ひよまると おどろう！</h1>
+        <p>「3・2・1・GO!」のあと、外から飛んでくる矢印が十字キーに重なったらタップ。<br>
+        PCなら矢印キーでも遊べます。</p>
+        <button id="startBtn">▶ 60秒試してみる</button>
+        <div class="smallnote">※背景4面とBGMは本番候補素材を実装済み。ひよまる・効果音・リザルトはまだボーン版です。</div>
+      </div>
+    </div>
+
+    <div id="resultOverlay">
+      <div class="card">
+        <h2>おつかれさま！</h2>
+        <div class="popcorn">🍿</div>
+        <p>もぐもぐ……</p>
+        <div class="flower" id="flowerResult">🌼</div>
+        <p id="resultText">ふつうのお花が咲いた！</p>
+        <button id="retryBtn">もう一回あそぶ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const STAGE_NAMES = [
+    "ひよまるくんの部屋",
+    "島の浜辺",
+    "夜の森",
+    "朝の灯台"
+  ];
+  const STAGE_CLASSES = ["scene-room","scene-beach","scene-forest","scene-lighthouse"];
+
+  // 15秒 / 4フレーズ。各フレーズ最後に1拍ぶん余韻。
+  // ここでは「1スロット = 15秒 / 32 = 468.75ms」として骨組みを作る。
+  const SLOT = 15000 / 32;
+  const TRAVEL = 1200;        // ノートが外から判定位置まで飛ぶ時間
+  const HIT_WINDOW = 240;     // ±240ms
+  const MISS_WINDOW = 320;
+
+  const charts = [
+    // 1面
+    [
+      ["LL","LL","RR","RR","UU","UU","DD","DD"],
+      ["LL","LL","RR","RR","UU","UU","DD","DD"],
+      ["RR","RR","LL","LL","UU","UU","DD","DD"],
+      ["LL","LL","RR","RR","UU","UU","DD","DD"],
+    ],
+    // 2面（3連打）
+    [
+      ["LLL","LLL","RRR","RRR","UUU","UUU","DDD","DDD"],
+      ["LLL","RRR","LLL","RRR","UUU","UUU","DDD","DDD"],
+      ["RRR","RRR","LLL","LLL","UUU","DDD","UUU","DDD"],
+      ["LLL","LLL","RRR","RRR","UUU","UUU","DDD","DDD"],
+    ],
+    // 3面（2音セットのまま、拍ごとの方向を散らす。4フレーズ目だけ少しバラける）
+    [
+      ["LL","DD","RR","UU","LL","DD","UU","RR"],
+      ["UU","RR","DD","LL","UU","LL","RR","DD"],
+      ["RR","UU","LL","DD","RR","LL","UU","DD"],
+      ["LR","RL","UD","DU","LL","RR","UD","DU"],
+    ],
+    // 4面（ほぼ1面、最後だけ休符を多く）
+    [
+      ["LL","LL","RR","RR","UU","UU","DD","DD"],
+      ["LL","LL","RR","RR","UU","UU","DD","DD"],
+      ["RR","RR","LL","LL","UU","UU","DD","DD"],
+      ["D.","D.","D.","D.","L.","L.",".U",".U"],
+    ]
+  ];
+
+  const scene = document.getElementById("sceneLayer");
+  const stageLabel = document.getElementById("stageLabel");
+  const timerLabel = document.getElementById("timerLabel");
+  const magicBar = document.getElementById("magicBar");
+  const character = document.getElementById("character");
+  const charWrap = document.getElementById("characterWrap");
+  const fx = document.getElementById("fx");
+  const feedback = document.getElementById("feedback");
+  const targets = {
+    left: document.getElementById("t-left"),
+    right: document.getElementById("t-right"),
+    up: document.getElementById("t-up"),
+    down: document.getElementById("t-down")
+  };
+  const startOverlay = document.getElementById("startOverlay");
+  const resultOverlay = document.getElementById("resultOverlay");
+  const flowerResult = document.getElementById("flowerResult");
+  const resultText = document.getElementById("resultText");
+  const startBtn = document.getElementById("startBtn");
+  const retryBtn = document.getElementById("retryBtn");
+  const bgm = document.getElementById("bgm");
+  const countdownOverlay = document.getElementById("countdownOverlay");
+  const countdownText = document.getElementById("countdownText");
+
+  let running = false;
+  let startAt = 0;
+  let raf = 0;
+  let notes = [];
+  let totalHits = 0;
+  let totalMiss = 0;
+  let streak = 0;
+  let spawnedStage = -1;
+  let timers = [];
+
+  const dirMap = {L:"left", R:"right", U:"up", D:"down"};
+
+  function clearTimers(){
+    timers.forEach(clearTimeout);
+    timers = [];
+  }
+
+  function makeDecor(stage){
+    // v0.5: 背景は本番候補の画像素材で描画するため、旧ボーン小物は使わない。
+    scene.innerHTML = "";
+  }
+
+  function setStage(stage){
+    STAGE_CLASSES.forEach(c => scene.classList.remove(c));
+    scene.classList.add(STAGE_CLASSES[stage]);
+    makeDecor(stage);
+    stageLabel.textContent = `${stage+1}面：${STAGE_NAMES[stage]}`;
+  }
+
+  function noteStartPosition(dir){
+    const game = document.getElementById("game").getBoundingClientRect();
+    const t = targets[dir].getBoundingClientRect();
+    const tx = t.left - game.left + t.width/2;
+    const ty = t.top - game.top + t.height/2;
+    if(dir==="left") return {x:-55,y:ty};
+    if(dir==="right") return {x:game.width+55,y:ty};
+    if(dir==="up") return {x:tx,y:-55};
+    return {x:tx,y:game.height+55};
+  }
+
+  function targetCenter(dir){
+    const game = document.getElementById("game").getBoundingClientRect();
+    const t = targets[dir].getBoundingClientRect();
+    return {x:t.left-game.left+t.width/2,y:t.top-game.top+t.height/2};
+  }
+
+  function spawnNote(dir, hitTime){
+    const el = document.createElement("div");
+    el.className = `note ${dir}`;
+    el.textContent = {left:"←",right:"→",up:"↑",down:"↓"}[dir];
+    document.getElementById("game").appendChild(el);
+
+    const start = noteStartPosition(dir);
+    const target = targetCenter(dir);
+    el.style.left = (start.x-23)+"px";
+    el.style.top = (start.y-23)+"px";
+
+    notes.push({dir, hitTime, el, hit:false, missed:false, start});
+    requestAnimationFrame(() => {
+      el.style.transition = `transform ${TRAVEL}ms linear, opacity .12s`;
+      el.style.transform = `translate(${target.x-start.x}px,${target.y-start.y}px)`;
+    });
+
+    timers.push(setTimeout(() => {
+      const n = notes.find(x=>x.el===el);
+      if(n && !n.hit && !n.missed){
+        n.missed = true;
+        missFeedback();
+      }
+      el.style.opacity = "0";
+      setTimeout(()=>el.remove(),140);
+    }, TRAVEL + MISS_WINDOW));
+  }
+
+  function scheduleStage(stage, stageStartMs){
+    const phraseCharts = charts[stage];
+    phraseCharts.forEach((phrase, pIdx) => {
+      phrase.forEach((token, slotIdx) => {
+        const slotStart = stageStartMs + (pIdx*8 + slotIdx) * SLOT;
+        const chars = token.split("");
+        const active = chars.filter(c => dirMap[c]);
+        if(!active.length) return;
+
+        // 同一スロットに2音/3音ある場合は、そのスロット内に均等配置
+        active.forEach((c, i) => {
+          const frac = active.length===1 ? 0.5 : (i+1)/(active.length+1);
+          const hitTime = slotStart + frac * SLOT;
+          const delay = Math.max(0, hitTime - TRAVEL);
+          timers.push(setTimeout(()=>spawnNote(dirMap[c], hitTime), delay));
+        });
+      });
+    });
+  }
+
+  function animateCharacter(dir, success=true){
+    const lean = dir==="left" ? -14 : dir==="right" ? 14 : 0;
+    const y = dir==="up" ? -14 : dir==="down" ? 6 : 0;
+    character.style.transform = `translateY(${y}px) rotate(${lean}deg)`;
+    if(success){
+      fx.style.opacity = "1";
+      charWrap.style.filter = "drop-shadow(0 0 12px #fff) drop-shadow(0 0 20px #9ee8ff)";
+      const wingL = document.querySelector(".wing.left");
+      const wingR = document.querySelector(".wing.right");
+      if(dir==="up"){
+        wingL.style.transform="rotate(-45deg)";
+        wingR.style.transform="scaleX(-1) rotate(-45deg)";
+      }
+      timers.push(setTimeout(()=>{
+        character.style.transform="";
+        fx.style.opacity="0";
+        charWrap.style.filter="";
+        wingL.style.transform="";
+        wingR.style.transform="";
+      },220));
+    }else{
+      character.style.transform="scale(1.03)";
+      timers.push(setTimeout(()=>character.style.transform="",180));
+    }
+  }
+
+  function showFeedback(text, good){
+    feedback.textContent = text;
+    feedback.className = good ? "show good" : "show miss";
+    timers.push(setTimeout(()=>feedback.className="",280));
+  }
+
+  function hitFeedback(dir){
+    totalHits++;
+    streak++;
+    const magic = Math.min(100, totalHits * 1.5);
+    magicBar.style.width = magic + "%";
+    showFeedback(streak>=3 ? "ピヨ♪ ノリノリ！" : "ピヨ♪", true);
+    animateCharacter(dir,true);
+  }
+
+  function missFeedback(){
+    totalMiss++;
+    streak=0;
+    showFeedback("おっと！", false);
+    animateCharacter("none",false);
+  }
+
+  function press(dir){
+    if(!running) return;
+    const elapsed = performance.now()-startAt;
+    let best = null;
+    let bestDiff = Infinity;
+    for(const n of notes){
+      if(n.dir!==dir || n.hit || n.missed) continue;
+      const diff = Math.abs(elapsed - n.hitTime);
+      if(diff<bestDiff){bestDiff=diff;best=n;}
+    }
+    if(best && bestDiff<=HIT_WINDOW){
+      best.hit=true;
+      best.el.style.opacity="0";
+      best.el.style.transform += " scale(1.35)";
+      targets[dir].classList.add("active");
+      timers.push(setTimeout(()=>targets[dir].classList.remove("active"),130));
+      hitFeedback(dir);
+      timers.push(setTimeout(()=>best.el.remove(),120));
+    }else{
+      missFeedback();
+    }
+  }
+
+  function loop(){
+    if(!running) return;
+    const elapsed = performance.now()-startAt;
+    timerLabel.textContent = `${Math.min(60,elapsed/1000).toFixed(1)} / 60.0`;
+
+    const stage = Math.min(3, Math.floor(elapsed/15000));
+    if(stage!==spawnedStage){
+      spawnedStage=stage;
+      setStage(stage);
+    }
+
+    if(elapsed>=60000){
+      finish();
+      return;
+    }
+    raf=requestAnimationFrame(loop);
+  }
+
+  function chooseFlower(){
+    const total = totalHits + totalMiss;
+    const ratio = total ? totalHits/total : 0;
+    if(ratio>.88) return ["⭐","おほしさまのお花が咲いた！"];
+    if(ratio>.76) return ["🌙","お月さまのお花が咲いた！"];
+    if(ratio>.62) return ["💗","ハートのお花が咲いた！"];
+    if(ratio>.45) return ["🌻","大きなひまわりが咲いた！"];
+    return ["🌼🌷🌼","小さなお花がいっぱい咲いた！"];
+  }
+
+  function finish(){
+    running=false;
+    cancelAnimationFrame(raf);
+    if(bgm){ bgm.pause(); bgm.currentTime = 0; }
+    const [flower,text] = chooseFlower();
+    flowerResult.textContent=flower;
+    resultText.textContent=text;
+    resultOverlay.style.display="grid";
+  }
+
+  function resetGame(){
+    clearTimers();
+    document.querySelectorAll(".note").forEach(n=>n.remove());
+    notes=[];
+    totalHits=0; totalMiss=0; streak=0; spawnedStage=-1;
+    magicBar.style.width="0%";
+    timerLabel.textContent="0.0 / 60.0";
+    setStage(0);
+    feedback.className="";
+    resultOverlay.style.display="none";
+    if(bgm){ bgm.pause(); bgm.currentTime = 0; }
+  }
+
+  
+  function wait(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
+
+  async function runCountdown(){
+    countdownOverlay.style.display = "grid";
+    for(const step of ["3","2","1","GO!"]){
+      countdownText.textContent = step;
+      countdownText.className = step === "GO!" ? "go" : "";
+      void countdownText.offsetWidth;
+      countdownText.classList.add("pop");
+      await wait(760);
+      countdownText.classList.remove("pop");
+    }
+    countdownOverlay.style.display = "none";
+  }
+
+async function startGame(){
+    resetGame();
+    startOverlay.style.display="none";
+    resultOverlay.style.display="none";
+
+    await runCountdown();
+
+    if(bgm){
+      try{ bgm.currentTime = 0; await bgm.play(); }
+      catch(e){ console.warn("BGM playback blocked:", e); }
+    }
+
+    running = true;
+    startAt = performance.now();
+    for(let s=0;s<4;s++){ scheduleStage(s,s*15000); }
+    raf=requestAnimationFrame(loop);
+  }
+
+  Object.entries(targets).forEach(([dir,el])=>{
+    el.addEventListener("pointerdown",e=>{e.preventDefault();press(dir)});
+  });
+
+  window.addEventListener("keydown",e=>{
+    const map={ArrowLeft:"left",ArrowRight:"right",ArrowUp:"up",ArrowDown:"down"};
+    if(map[e.key]){
+      e.preventDefault();
+      press(map[e.key]);
+    }
+  });
+
+  startBtn.addEventListener("click",startGame);
+  retryBtn.addEventListener("click",startGame);
+
+  setStage(0);
+})();
+</script>
+
+<audio id="bgm" preload="auto">
+  <source src="assets/hiyomaru_60s_bgm_v1.m4a" type="audio/mp4">
+</audio>
+
+</body>
+</html>
