@@ -1,18 +1,14 @@
-# ひよまるくん リズムゲーム v0.5
+# Hiyomaru Rhythm v0.5.1
 
-GitHub Pages用の試作一式です。
+GitHub Pages 用の改訂版一式です。
 
-## ファイル構成
+このフォルダ内のファイルを **全部同じ階層** にアップロードしてください。
+
 - index.html
-- assets/
-  - bg_room.png
-  - bg_beach.png
-  - bg_forest.png
-  - bg_lighthouse.png
-  - hiyomaru_60s_bgm_v1.m4a
+- bg_room.png
+- bg_beach.png
+- bg_forest.png
+- bg_lighthouse.png
+- hiyomaru_60s_bgm_v1.m4a
 
-## GitHub Pages
-このフォルダ内の `index.html` と `assets` フォルダを、リポジトリのルートにそのまま置いてください。
-Pages の公開元をそのブランチの `/ (root)` にすると、URLから遊べます。
-
-現在は背景/BGMが本番候補、ひよまる・効果音・リザルトはボーン版です。
+GitHub Pages の公開元は main / (root) でOKです。
