@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ひよまるくん リズムゲーム試作 v0.5.2.2.1</title>
+<title>ひよまるくん リズムゲーム試作 v0.5.3.2.1</title>
 <style>
 :root{
   --ink:#5a5c86;
@@ -244,7 +244,7 @@ button:active{transform:translateY(1px)}
 }
 
 
-/* ===== v0.5.2 本番候補背景 ===== */
+/* ===== v0.5.3 本番候補背景 ===== */
 #sceneLayer{
   background-position:center center !important;
   background-size:cover !important;
@@ -275,7 +275,7 @@ button:active{transform:translateY(1px)}
 }
 
 
-/* ===== v0.5.2.2 GitHub Pages absolute-background fix ===== */
+/* ===== v0.5.3.2 GitHub Pages absolute-background fix ===== */
 #sceneLayer.scene-room {
   background: url("bg_room.png") center center / cover no-repeat !important;
 }
@@ -329,7 +329,7 @@ button:active{transform:translateY(1px)}
 <body>
 <div id="app">
   <div class="topbar">
-    <div class="title">ひよまるくん リズムゲーム試作 v0.5.2.2.1</div>
+    <div class="title">ひよまるくん リズムゲーム試作 v0.5.3.2.1</div>
     <div class="meta">
       <span class="badge">コンパクト正方形UI</span><span class="badge">4面 × 15秒</span>
       <span class="badge">BGM v1入り</span>
@@ -489,7 +489,7 @@ button:active{transform:translateY(1px)}
   }
 
   function makeDecor(stage){
-    // v0.5.2: 背景は本番候補の画像素材で描画するため、旧ボーン小物は使わない。
+    // v0.5.3: 背景は本番候補の画像素材で描画するため、旧ボーン小物は使わない。
     scene.innerHTML = "";
   }
 
@@ -826,7 +826,7 @@ async function startGame(){
 </script>
 
 <audio id="bgm" preload="auto" playsinline>
-  <source src="hiyomaru_60s_bgm_v1.m4a" type="audio/mp4">
+  <source src="hiyomaru_60s_bgm_v1.mp3" type="audio/mpeg">
 </audio>
 
 </body>
