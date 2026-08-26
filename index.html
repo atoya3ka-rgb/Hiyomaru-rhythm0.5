@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ひよまるくん リズムゲーム試作 v0.5.1.1</title>
+<title>ひよまるくん リズムゲーム試作 v0.5.2.2.1</title>
 <style>
 :root{
   --ink:#5a5c86;
@@ -244,7 +244,7 @@ button:active{transform:translateY(1px)}
 }
 
 
-/* ===== v0.5 本番候補背景 ===== */
+/* ===== v0.5.2 本番候補背景 ===== */
 #sceneLayer{
   background-position:center center !important;
   background-size:cover !important;
@@ -275,7 +275,7 @@ button:active{transform:translateY(1px)}
 }
 
 
-/* ===== v0.5.1 GitHub Pages absolute-background fix ===== */
+/* ===== v0.5.2.2 GitHub Pages absolute-background fix ===== */
 #sceneLayer.scene-room {
   background: url("bg_room.png") center center / cover no-repeat !important;
 }
@@ -294,17 +294,47 @@ button:active{transform:translateY(1px)}
   content:none !important;
 }
 
+
+#soundToggle{
+  border:2px solid #e4defe;
+  background:#ffffffdd;
+  color:#6670aa;
+  box-shadow:none;
+  padding:7px 12px;
+  font-size:13px;
+  border-radius:999px;
+  cursor:pointer;
+  min-width:88px;
+}
+#soundToggle:active{transform:scale(.98)}
+#audioStatus{
+  position:absolute;
+  right:12px;
+  bottom:10px;
+  z-index:22;
+  font-size:11px;
+  color:#68709b;
+  background:#ffffffc9;
+  border:1px solid #e8e3ff;
+  border-radius:999px;
+  padding:4px 8px;
+  opacity:0;
+  transition:opacity .2s ease;
+  pointer-events:none;
+}
+#audioStatus.show{opacity:1}
+
 </style>
 </head>
 <body>
 <div id="app">
   <div class="topbar">
-    <div class="title">ひよまるくん リズムゲーム試作 v0.5.1.1</div>
+    <div class="title">ひよまるくん リズムゲーム試作 v0.5.2.2.1</div>
     <div class="meta">
       <span class="badge">コンパクト正方形UI</span><span class="badge">4面 × 15秒</span>
       <span class="badge">BGM v1入り</span>
       <span class="badge">タップ / 矢印キー</span>
-    </div>
+    </div><button id="soundToggle" type="button" aria-pressed="false">🔊 音ON</button>
   </div>
 
   <div id="game">
@@ -339,6 +369,8 @@ button:active{transform:translateY(1px)}
     <div id="t-down" class="target" data-dir="down">↓</div>
 
     <div id="countdownOverlay"><div id="countdownText">3</div></div>
+
+    <div id="audioStatus">音声を準備中…</div>
 
     <div id="startOverlay">
       <div class="card">
@@ -434,6 +466,10 @@ button:active{transform:translateY(1px)}
   const bgm = document.getElementById("bgm");
   const countdownOverlay = document.getElementById("countdownOverlay");
   const countdownText = document.getElementById("countdownText");
+  const soundToggle = document.getElementById("soundToggle");
+  const audioStatus = document.getElementById("audioStatus");
+  let soundEnabled = true;
+  let audioUnlocked = false;
 
   let running = false;
   let startAt = 0;
@@ -453,7 +489,7 @@ button:active{transform:translateY(1px)}
   }
 
   function makeDecor(stage){
-    // v0.5: 背景は本番候補の画像素材で描画するため、旧ボーン小物は使わない。
+    // v0.5.2: 背景は本番候補の画像素材で描画するため、旧ボーン小物は使わない。
     scene.innerHTML = "";
   }
 
@@ -652,6 +688,56 @@ button:active{transform:translateY(1px)}
   }
 
   
+
+  function showAudioStatus(text){
+    if(!audioStatus) return;
+    audioStatus.textContent = text;
+    audioStatus.classList.add("show");
+    setTimeout(()=>audioStatus.classList.remove("show"), 1400);
+  }
+
+  function updateSoundButton(){
+    if(!soundToggle) return;
+    soundToggle.textContent = soundEnabled ? "🔊 音ON" : "🔇 音OFF";
+    soundToggle.setAttribute("aria-pressed", soundEnabled ? "false" : "true");
+  }
+
+  async function unlockAudioForSafari(){
+    if(!bgm || audioUnlocked) return true;
+    try{
+      bgm.muted = false;
+      bgm.volume = 0;
+      bgm.currentTime = 0;
+
+      // IMPORTANT: this play() is called directly from the user's tap.
+      const p = bgm.play();
+      if(p && typeof p.then === "function") await p;
+
+      audioUnlocked = true;
+      showAudioStatus("♪ 音声の準備OK");
+      return true;
+    }catch(err){
+      console.warn("Audio unlock failed:", err);
+      showAudioStatus("音声を再生できませんでした");
+      return false;
+    }
+  }
+
+  function setGameMusicAudible(){
+    if(!bgm) return;
+    try{
+      bgm.currentTime = 0;
+      bgm.muted = !soundEnabled;
+      bgm.volume = soundEnabled ? 1 : 0;
+      if(bgm.paused){
+        const p = bgm.play();
+        if(p && typeof p.catch === "function") p.catch(()=>{});
+      }
+    }catch(e){
+      console.warn(e);
+    }
+  }
+
   function wait(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
 
   async function runCountdown(){
@@ -672,16 +758,22 @@ async function startGame(){
     startOverlay.style.display="none";
     resultOverlay.style.display="none";
 
+    // Safari/iOS対策:
+    // スタートボタンのタップ直後に音声を一度再生して権限を確保。
+    // カウントダウン中は volume=0 なので聞こえない。
+    await unlockAudioForSafari();
+
     await runCountdown();
 
-    if(bgm){
-      try{ bgm.currentTime = 0; await bgm.play(); }
-      catch(e){ console.warn("BGM playback blocked:", e); }
-    }
+    // GO! と同時に曲を先頭から鳴らす
+    setGameMusicAudible();
 
     running = true;
     startAt = performance.now();
-    for(let s=0;s<4;s++){ scheduleStage(s,s*15000); }
+
+    for(let s=0;s<4;s++){
+      scheduleStage(s,s*15000);
+    }
     raf=requestAnimationFrame(loop);
   }
 
@@ -697,6 +789,35 @@ async function startGame(){
     }
   });
 
+
+  soundToggle.addEventListener("click", async () => {
+    soundEnabled = !soundEnabled;
+    updateSoundButton();
+
+    if(soundEnabled){
+      // A tap on this button is also a valid Safari user gesture.
+      if(!audioUnlocked){
+        await unlockAudioForSafari();
+      }
+      if(running && bgm){
+        bgm.muted = false;
+        bgm.volume = 1;
+        if(bgm.paused){
+          try{ await bgm.play(); }catch(e){}
+        }
+      }
+      showAudioStatus("🔊 BGM ON");
+    }else{
+      if(bgm){
+        bgm.muted = true;
+        bgm.volume = 0;
+      }
+      showAudioStatus("🔇 BGM OFF");
+    }
+  });
+
+  updateSoundButton();
+
   startBtn.addEventListener("click",startGame);
   retryBtn.addEventListener("click",startGame);
 
@@ -704,7 +825,7 @@ async function startGame(){
 })();
 </script>
 
-<audio id="bgm" preload="auto">
+<audio id="bgm" preload="auto" playsinline>
   <source src="hiyomaru_60s_bgm_v1.m4a" type="audio/mp4">
 </audio>
 

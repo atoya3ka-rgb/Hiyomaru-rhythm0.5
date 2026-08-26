@@ -1,14 +1,14 @@
-# Hiyomaru Rhythm v0.5.1
+# Hiyomaru Rhythm v0.5.2
 
-GitHub Pages 用の改訂版一式です。
+GitHub Pages 用の Safari/iPhone 音声修正版です。
 
-このフォルダ内のファイルを **全部同じ階層** にアップロードしてください。
+## 変更点
+- スタートボタンを押した瞬間に Safari の音声再生をアンロック
+- カウントダウン中は無音
+- GO! と同時に BGM を0秒から再生
+- 「🔊 音ON / 🔇 音OFF」ボタンを追加
+- 背景4枚・BGM・譜面・正方形UIは v0.5.1 を継続
 
-- index.html
-- bg_room.png
-- bg_beach.png
-- bg_forest.png
-- bg_lighthouse.png
-- hiyomaru_60s_bgm_v1.m4a
-
-GitHub Pages の公開元は main / (root) でOKです。
+## アップロード
+このZIP内のファイルをすべて GitHub リポジトリの root に置いてください。
+Pages設定は main / (root) のままでOKです。
