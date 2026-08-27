@@ -1,14 +1,17 @@
-# Hiyomaru Rhythm v0.5.6
+# Hiyomaru Rhythm v0.5.7
 
-iPhone/iPad Safari向け・BGM同期修正版です。
+BGM本命修正版です。
 
-## 変更点
-- BGMの先頭に 3.04秒の無音を追加
-- 「スタート」を押したその瞬間に音源を再生開始
-- 無音部分の間に 3 → 2 → 1 → GO! を表示
-- GO!終了とほぼ同時にBGM本編が始まる
-- Safariがブロックしやすい「カウントダウン後の再play()」を廃止
-- 診断用の標準プレイヤー/BGMテストボタンは撤去
-- 音ON/OFFは継続
+## 原因
+ゲームスクリプトが `document.getElementById("bgm")` を実行した時点で、
+`<audio id="bgm">` がまだHTMLの後方にあり、BGM要素を取得できていませんでした。
 
-GitHub Pagesのrootへ、このZIPの中身をすべてアップロードしてください。
+## 修正
+- `<audio id="bgm">` をゲームJavaScriptより前に移動
+- v0.5.6の「3.04秒無音リードイン」方式を継続
+- スタートをタップした瞬間に再生開始
+- 3 → 2 → 1 → GO! の間は無音
+- GO!終了付近からBGM本編開始
+- 音ON/OFF機能を継続
+
+GitHub Pagesのrootへ、このZIPの中身をすべて上書きアップロードしてください。
