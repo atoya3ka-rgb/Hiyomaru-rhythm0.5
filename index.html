@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ひよまるくん リズムゲーム試作 v0.7.2</title>
+<title>ひよまるくん リズムゲーム試作 v0.7.3</title>
 <style>
 :root{
   --ink:#5a5c86;
@@ -408,7 +408,7 @@ button:active{transform:translateY(1px)}
 }
 
 
-/* ===== v0.7.2 リザルト演出 ===== */
+/* ===== v0.7.3 リザルト演出 ===== */
 #resultOverlay{
   display:none;
   background:
@@ -577,7 +577,7 @@ button:active{transform:translateY(1px)}
 }
 
 
-/* v0.7.2 result character image phases */
+/* v0.7.3 result character image phases */
 #resultOverlay.phase-munch #resultHiyo{
   animation:resultMunch .38s ease-in-out infinite alternate;
 }
@@ -668,6 +668,7 @@ button:active{transform:translateY(1px)}
 </div>
 
 <!-- BGM must exist in the DOM before the game script reads #bgm. -->
+<audio id="tapSe" preload="auto" playsinline src="hiyomaru_tambourine_shan_v1.mp3"></audio>
 <audio id="bgm" preload="auto" playsinline>
   <source src="hiyomaru_60s_bgm_v1_leadin3040.mp3" type="audio/mpeg">
 </audio>
@@ -768,6 +769,7 @@ button:active{transform:translateY(1px)}
   const startBtn = document.getElementById("startBtn");
   const retryBtn = document.getElementById("retryBtn");
   const bgm = document.getElementById("bgm");
+  const tapSe = document.getElementById("tapSe");
   if(!bgm){
     console.error("BGM element was not found before game initialization.");
   }
@@ -1026,6 +1028,7 @@ button:active{transform:translateY(1px)}
   }
 
   function press(dir){
+    playTapSe();
     if(!running) return;
     const elapsed = performance.now()-startAt;
     let best = null;
@@ -1199,6 +1202,18 @@ button:active{transform:translateY(1px)}
     }catch(e){
       console.warn(e);
     }
+  }
+
+
+  function playTapSe(){
+    if(!tapSe || !soundEnabled) return;
+    try{
+      tapSe.pause();
+      tapSe.currentTime = 0;
+      tapSe.volume = 0.75;
+      const p = tapSe.play();
+      if(p && typeof p.catch === "function") p.catch(()=>{});
+    }catch(e){}
   }
 
   function wait(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
