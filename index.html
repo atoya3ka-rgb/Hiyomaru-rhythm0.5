@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ひよまるくん リズムゲーム試作 v0.5.3.2.1</title>
+<title>ひよまるくん リズムゲーム試作 v0.5.4.2.1</title>
 <style>
 :root{
   --ink:#5a5c86;
@@ -244,7 +244,7 @@ button:active{transform:translateY(1px)}
 }
 
 
-/* ===== v0.5.3 本番候補背景 ===== */
+/* ===== v0.5.4 本番候補背景 ===== */
 #sceneLayer{
   background-position:center center !important;
   background-size:cover !important;
@@ -275,7 +275,7 @@ button:active{transform:translateY(1px)}
 }
 
 
-/* ===== v0.5.3.2 GitHub Pages absolute-background fix ===== */
+/* ===== v0.5.4.2 GitHub Pages absolute-background fix ===== */
 #sceneLayer.scene-room {
   background: url("bg_room.png") center center / cover no-repeat !important;
 }
@@ -324,17 +324,31 @@ button:active{transform:translateY(1px)}
 }
 #audioStatus.show{opacity:1}
 
+
+#bgmTest{
+  border:2px solid #e4defe;
+  background:#ffffffdd;
+  color:#6670aa;
+  box-shadow:none;
+  padding:7px 12px;
+  font-size:13px;
+  border-radius:999px;
+  cursor:pointer;
+  margin-left:6px;
+}
+#bgmTest:active{transform:scale(.98)}
+
 </style>
 </head>
 <body>
 <div id="app">
   <div class="topbar">
-    <div class="title">ひよまるくん リズムゲーム試作 v0.5.3.2.1</div>
+    <div class="title">ひよまるくん リズムゲーム試作 v0.5.4.2.1</div>
     <div class="meta">
       <span class="badge">コンパクト正方形UI</span><span class="badge">4面 × 15秒</span>
       <span class="badge">BGM v1入り</span>
       <span class="badge">タップ / 矢印キー</span>
-    </div><button id="soundToggle" type="button" aria-pressed="false">🔊 音ON</button>
+    </div><button id="soundToggle" type="button" aria-pressed="false">🔊 音ON</button><button id="bgmTest" type="button">♪ BGMテスト</button>
   </div>
 
   <div id="game">
@@ -467,6 +481,7 @@ button:active{transform:translateY(1px)}
   const countdownOverlay = document.getElementById("countdownOverlay");
   const countdownText = document.getElementById("countdownText");
   const soundToggle = document.getElementById("soundToggle");
+  const bgmTest = document.getElementById("bgmTest");
   const audioStatus = document.getElementById("audioStatus");
   let soundEnabled = true;
   let audioUnlocked = false;
@@ -489,7 +504,7 @@ button:active{transform:translateY(1px)}
   }
 
   function makeDecor(stage){
-    // v0.5.3: 背景は本番候補の画像素材で描画するため、旧ボーン小物は使わない。
+    // v0.5.4: 背景は本番候補の画像素材で描画するため、旧ボーン小物は使わない。
     scene.innerHTML = "";
   }
 
@@ -789,6 +804,36 @@ async function startGame(){
     }
   });
 
+
+
+  bgmTest.addEventListener("click", async () => {
+    if(!bgm) return;
+    try{
+      bgm.pause();
+      bgm.currentTime = 0;
+      bgm.muted = false;
+      bgm.volume = 1;
+
+      const p = bgm.play();
+      if(p && typeof p.then === "function") await p;
+
+      audioUnlocked = true;
+      soundEnabled = true;
+      updateSoundButton();
+      showAudioStatus("♪ BGMテスト再生中");
+
+      setTimeout(() => {
+        try{
+          bgm.pause();
+          bgm.currentTime = 0;
+        }catch(e){}
+        showAudioStatus("BGMテスト終了");
+      }, 5000);
+    }catch(err){
+      console.warn("BGM test failed:", err);
+      showAudioStatus("BGMテスト再生に失敗");
+    }
+  });
 
   soundToggle.addEventListener("click", async () => {
     soundEnabled = !soundEnabled;
