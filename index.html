@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ひよまるくん リズムゲーム試作 v0.7.4</title>
+<title>ひよまるくん リズムゲーム試作 v0.7.5</title>
 <style>
 :root{
   --ink:#5a5c86;
@@ -408,7 +408,7 @@ button:active{transform:translateY(1px)}
 }
 
 
-/* ===== v0.7.4 リザルト演出 ===== */
+/* ===== v0.7.5 リザルト演出 ===== */
 #resultOverlay{
   display:none;
   background:
@@ -577,7 +577,7 @@ button:active{transform:translateY(1px)}
 }
 
 
-/* v0.7.4 result character image phases */
+/* v0.7.5 result character image phases */
 #resultOverlay.phase-munch #resultHiyo{
   animation:resultMunch .38s ease-in-out infinite alternate;
 }
@@ -770,6 +770,9 @@ button:active{transform:translateY(1px)}
   const retryBtn = document.getElementById("retryBtn");
   const bgm = document.getElementById("bgm");
   const tapSe = document.getElementById("tapSe");
+  let seAudioCtx = null;
+  let tapSeBuffer = null;
+  let tapSeLoading = null;
   if(!bgm){
     console.error("BGM element was not found before game initialization.");
   }
@@ -1029,6 +1032,7 @@ button:active{transform:translateY(1px)}
 
   function press(dir){
     playTapSe();
+    
     if(!running) return;
     const elapsed = performance.now()-startAt;
     let best = null;
@@ -1205,16 +1209,80 @@ button:active{transform:translateY(1px)}
   }
 
 
-  function playTapSe(){
-    if(!tapSe || !soundEnabled) return;
+  async function prepareTapSe(){
+    if(tapSeBuffer) return tapSeBuffer;
+    if(tapSeLoading) return tapSeLoading;
+
+    tapSeLoading = (async()=>{
+      try{
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if(!AC) return null;
+
+        if(!seAudioCtx) seAudioCtx = new AC({latencyHint:"interactive"});
+
+        const res = await fetch("hiyomaru_tambourine_cha_v2.mp3", {cache:"force-cache"});
+        const buf = await res.arrayBuffer();
+        tapSeBuffer = await seAudioCtx.decodeAudioData(buf.slice(0));
+        return tapSeBuffer;
+      }catch(err){
+        console.warn("SE preload failed:", err);
+        return null;
+      }
+    })();
+
+    return tapSeLoading;
+  }
+
+  async function unlockSeAudio(){
     try{
-      tapSe.pause();
-      tapSe.currentTime = 0;
-      tapSe.volume = 0.75;
-      const p = tapSe.play();
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(!AC) return;
+      if(!seAudioCtx) seAudioCtx = new AC({latencyHint:"interactive"});
+      if(seAudioCtx.state === "suspended") await seAudioCtx.resume();
+      prepareTapSe();
+    }catch(err){
+      console.warn("SE unlock failed:", err);
+    }
+  }
+
+  function playTapSe(){
+    if(!soundEnabled) return;
+
+    try{
+      if(seAudioCtx && tapSeBuffer){
+        if(seAudioCtx.state === "suspended"){
+          seAudioCtx.resume().catch(()=>{});
+        }
+
+        // Every press gets its own source node, so rapid inputs can overlap.
+        const src = seAudioCtx.createBufferSource();
+        const gain = seAudioCtx.createGain();
+
+        src.buffer = tapSeBuffer;
+        gain.gain.value = 0.72;
+
+        src.connect(gain);
+        gain.connect(seAudioCtx.destination);
+
+        // Start immediately on the current audio clock.
+        src.start(0);
+        return;
+      }
+    }catch(err){
+      console.warn("WebAudio SE failed:", err);
+    }
+
+    // Fallback for browsers where Web Audio could not initialize.
+    if(!tapSe) return;
+    try{
+      const clone = tapSe.cloneNode(true);
+      clone.volume = 0.72;
+      const p = clone.play();
       if(p && typeof p.catch === "function") p.catch(()=>{});
     }catch(e){}
   }
+
+  prepareTapSe();
 
   function wait(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
 
@@ -1310,8 +1378,14 @@ async function startGame(){
 
   updateSoundButton();
 
-  startBtn.addEventListener("click",startGame);
-  retryBtn.addEventListener("click",startGame);
+  startBtn.addEventListener("click", async ()=>{
+    await unlockSeAudio();
+    startGame();
+  });
+  retryBtn.addEventListener("click", async ()=>{
+    await unlockSeAudio();
+    startGame();
+  });
 
   setStage(0);
 })();
