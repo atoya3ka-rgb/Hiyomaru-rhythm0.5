@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ひよまるくん リズムゲーム試作 v0.5.8.2.1</title>
+<title>ひよまるくん リズムゲーム試作 v0.6.0.2.1</title>
 <style>
 :root{
   --ink:#5a5c86;
@@ -244,7 +244,7 @@ button:active{transform:translateY(1px)}
 }
 
 
-/* ===== v0.5.8 本番候補背景 ===== */
+/* ===== v0.6.0 本番候補背景 ===== */
 #sceneLayer{
   background-position:center center !important;
   background-size:cover !important;
@@ -275,7 +275,7 @@ button:active{transform:translateY(1px)}
 }
 
 
-/* ===== v0.5.8.2 GitHub Pages absolute-background fix ===== */
+/* ===== v0.6.0.2 GitHub Pages absolute-background fix ===== */
 #sceneLayer.scene-room {
   background: url("bg_room.png") center center / cover no-repeat !important;
 }
@@ -330,12 +330,60 @@ button:active{transform:translateY(1px)}
 
 
 
+
+/* ===== v0.6.0 本番ひよまる PNGモーション ===== */
+#characterWrap{
+  width:31%;
+  min-width:118px;
+  bottom:18%;
+}
+#character{
+  inset:-10%;
+  transform-origin:50% 72%;
+  transition:transform .11s ease;
+}
+#characterSprite{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  object-position:center;
+  user-select:none;
+  -webkit-user-drag:none;
+  pointer-events:none;
+  filter:drop-shadow(0 5px 5px rgba(61,72,126,.12));
+}
+#character.sprite-pop{
+  animation:hiyoSpritePop .22s ease;
+}
+#character.sprite-miss{
+  animation:hiyoMissShake .22s ease;
+}
+@keyframes hiyoSpritePop{
+  0%{transform:translateY(0) scale(.98)}
+  45%{transform:translateY(-4px) scale(1.045)}
+  100%{transform:translateY(0) scale(1)}
+}
+@keyframes hiyoMissShake{
+  0%,100%{transform:translateX(0) rotate(0)}
+  25%{transform:translateX(-4px) rotate(-3deg)}
+  55%{transform:translateX(4px) rotate(3deg)}
+  80%{transform:translateX(-2px) rotate(-1deg)}
+}
+.body,.hat,.eye,.blush,.beak,.wing,.foot{display:none !important;}
+@media(max-width:700px){
+  #characterWrap{width:30%;min-width:104px;bottom:18%}
+}
+@media(max-width:390px){
+  #characterWrap{width:29%;min-width:94px;bottom:18%}
+}
+
 </style>
 </head>
 <body>
 <div id="app">
   <div class="topbar">
-    <div class="title">ひよまるくん リズムゲーム試作 v0.5.8.2.1</div>
+    <div class="title">ひよまるくん リズムゲーム試作 v0.6.0.2.1</div>
     <div class="meta">
       <span class="badge">コンパクト正方形UI</span><span class="badge">4面 × 15秒</span>
       <span class="badge">BGM v1入り</span>
@@ -355,14 +403,7 @@ button:active{transform:translateY(1px)}
     <div id="characterWrap">
       <div class="shadow"></div>
       <div id="character">
-        <div class="wing left"></div>
-        <div class="wing right"></div>
-        <div class="body"></div>
-        <div class="hat"></div>
-        <div class="eye left"></div><div class="eye right"></div>
-        <div class="blush left"></div><div class="blush right"></div>
-        <div class="beak"></div>
-        <div class="foot left"></div><div class="foot right"></div>
+        <img id="characterSprite" src="hiyomaru_idle.png" alt="ひよまるくん">
         <div id="fx"><i class="spark s1"></i><i class="spark s2"></i><i class="spark s3"></i></div>
       </div>
     </div>
@@ -459,6 +500,23 @@ button:active{transform:translateY(1px)}
   const timerLabel = document.getElementById("timerLabel");
   const magicBar = document.getElementById("magicBar");
   const character = document.getElementById("character");
+  const characterSprite = document.getElementById("characterSprite");
+  const SPRITES = {
+    idle: "hiyomaru_idle.png",
+    leftSoft: "hiyomaru_left_soft.png",
+    leftStrong: "hiyomaru_left_strong.png",
+    rightSoft: "hiyomaru_right_soft.png",
+    rightStrong: "hiyomaru_right_strong.png",
+    wings: "hiyomaru_wings.png",
+    sparkle: "hiyomaru_sparkle.png"
+  };
+  Object.values(SPRITES).forEach(src => {
+    const img = new Image();
+    img.src = src;
+  });
+  let lastSpriteDir = "";
+  let sameDirCount = 0;
+  let spriteResetTimer = 0;
   const charWrap = document.getElementById("characterWrap");
   const fx = document.getElementById("fx");
   const feedback = document.getElementById("feedback");
@@ -503,7 +561,7 @@ button:active{transform:translateY(1px)}
   }
 
   function makeDecor(stage){
-    // v0.5.8: 背景は本番候補の画像素材で描画するため、旧ボーン小物は使わない。
+    // v0.6.0: 背景は本番候補の画像素材で描画するため、旧ボーン小物は使わない。
     scene.innerHTML = "";
   }
 
@@ -579,29 +637,76 @@ button:active{transform:translateY(1px)}
     });
   }
 
+  function setHiyoSprite(src){
+    if(characterSprite && characterSprite.getAttribute("src") !== src){
+      characterSprite.setAttribute("src", src);
+    }
+  }
+
+  function resetHiyoSoon(delay=190){
+    clearTimeout(spriteResetTimer);
+    spriteResetTimer = setTimeout(()=>{
+      setHiyoSprite(SPRITES.idle);
+      character.style.transform = "";
+      character.classList.remove("sprite-pop","sprite-miss");
+      fx.style.opacity = "0";
+      charWrap.style.filter = "";
+    }, delay);
+  }
+
   function animateCharacter(dir, success=true){
-    const lean = dir==="left" ? -14 : dir==="right" ? 14 : 0;
-    const y = dir==="up" ? -14 : dir==="down" ? 6 : 0;
-    character.style.transform = `translateY(${y}px) rotate(${lean}deg)`;
-    if(success){
-      fx.style.opacity = "1";
-      charWrap.style.filter = "drop-shadow(0 0 12px #fff) drop-shadow(0 0 20px #9ee8ff)";
-      const wingL = document.querySelector(".wing.left");
-      const wingR = document.querySelector(".wing.right");
-      if(dir==="up"){
-        wingL.style.transform="rotate(-45deg)";
-        wingR.style.transform="scaleX(-1) rotate(-45deg)";
-      }
-      timers.push(setTimeout(()=>{
-        character.style.transform="";
-        fx.style.opacity="0";
-        charWrap.style.filter="";
-        wingL.style.transform="";
-        wingR.style.transform="";
-      },220));
+    clearTimeout(spriteResetTimer);
+    character.classList.remove("sprite-pop","sprite-miss");
+    void character.offsetWidth;
+
+    if(!success){
+      setHiyoSprite(SPRITES.idle);
+      character.style.transform = "";
+      character.classList.add("sprite-miss");
+      resetHiyoSoon(230);
+      return;
+    }
+
+    if(dir === lastSpriteDir){
+      sameDirCount++;
     }else{
-      character.style.transform="scale(1.03)";
-      timers.push(setTimeout(()=>character.style.transform="",180));
+      lastSpriteDir = dir;
+      sameDirCount = 0;
+    }
+
+    let sprite = SPRITES.idle;
+    let extraTransform = "";
+
+    if(dir === "left"){
+      sprite = sameDirCount % 2 ? SPRITES.leftStrong : SPRITES.leftSoft;
+      extraTransform = "translateX(-3px) rotate(-3deg)";
+    }else if(dir === "right"){
+      sprite = sameDirCount % 2 ? SPRITES.rightStrong : SPRITES.rightSoft;
+      extraTransform = "translateX(3px) rotate(3deg)";
+    }else if(dir === "up"){
+      sprite = SPRITES.wings;
+      extraTransform = "translateY(-5px)";
+    }else if(dir === "down"){
+      sprite = SPRITES.idle;
+      extraTransform = "translateY(5px) scaleY(.97)";
+    }
+
+    // 3コンボ以上は、通常ポーズのあと短くキラッを挟む。
+    setHiyoSprite(sprite);
+    character.style.transform = extraTransform;
+    character.classList.add("sprite-pop");
+    charWrap.style.filter = "drop-shadow(0 0 10px #fff) drop-shadow(0 0 16px #9ee8ff)";
+
+    if(streak >= 3){
+      timers.push(setTimeout(()=>{
+        setHiyoSprite(SPRITES.sparkle);
+        character.style.transform = "translateY(-7px) scale(1.02)";
+        fx.style.opacity = "1";
+      }, 95));
+      resetHiyoSoon(245);
+    }else{
+      fx.style.opacity = "1";
+      resetHiyoSoon(195);
     }
   }
 
@@ -689,6 +794,12 @@ button:active{transform:translateY(1px)}
   }
 
   function resetGame(){
+    clearTimeout(spriteResetTimer);
+    setHiyoSprite(SPRITES.idle);
+    character.style.transform = "";
+    character.classList.remove("sprite-pop","sprite-miss");
+    lastSpriteDir = "";
+    sameDirCount = 0;
     clearTimers();
     document.querySelectorAll(".note").forEach(n=>n.remove());
     notes=[];
