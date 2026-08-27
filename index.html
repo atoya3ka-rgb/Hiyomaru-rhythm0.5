@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ひよまるくん リズムゲーム試作 v0.7.0</title>
+<title>ひよまるくん リズムゲーム試作 v0.7.2</title>
 <style>
 :root{
   --ink:#5a5c86;
@@ -408,7 +408,7 @@ button:active{transform:translateY(1px)}
 }
 
 
-/* ===== v0.7.0 リザルト演出 ===== */
+/* ===== v0.7.2 リザルト演出 ===== */
 #resultOverlay{
   display:none;
   background:
@@ -434,9 +434,9 @@ button:active{transform:translateY(1px)}
 }
 #resultHiyoWrap{
   position:relative;
-  width:34%;
-  min-width:106px;
-  max-width:190px;
+  width:42%;
+  min-width:136px;
+  max-width:230px;
   aspect-ratio:1/1;
 }
 #resultHiyo{
@@ -446,37 +446,17 @@ button:active{transform:translateY(1px)}
   object-fit:contain;
   filter:drop-shadow(0 6px 7px rgba(72,82,135,.14));
 }
-#munchFace{
-  position:absolute;
-  left:50%;
-  top:43%;
-  transform:translate(-50%,-50%);
-  font-size:clamp(13px,3.8vw,21px);
-  font-weight:1000;
-  color:#596273;
-  letter-spacing:.48em;
-  padding-left:.48em;
-  opacity:0;
-  text-shadow:0 1px 2px #fff;
-}
-#resultPopcorn{
-  position:absolute;
-  right:-9%;
-  bottom:0;
-  font-size:clamp(32px,9vw,54px);
-  opacity:0;
-}
 #resultFlower{
-  width:55%;
-  max-width:275px;
+  width:28%;
+  max-width:142px;
   min-height:100%;
   display:grid;
   place-items:center;
   text-align:center;
-  font-size:clamp(70px,22vw,138px);
+  font-size:clamp(34px,11vw,72px);
   line-height:1;
   opacity:0;
-  transform:scale(.25) translateY(8px);
+  transform:scale(.25) translateY(4px);
   filter:drop-shadow(0 8px 8px rgba(77,86,135,.13));
   z-index:3;
 }
@@ -523,14 +503,10 @@ button:active{transform:translateY(1px)}
 #resultMagic span:nth-child(8){left:8%;top:53%}
 
 #resultOverlay.phase-munch #resultPopcorn,
-#resultOverlay.phase-munch #munchFace{opacity:1}
-#resultOverlay.phase-munch #resultHiyo{
+#resultOverlay.phase-munch #resultOverlay.phase-munch #resultHiyo{
   animation:resultMunch .38s ease-in-out infinite alternate;
 }
-#resultOverlay.phase-munch #resultPopcorn{
-  animation:resultPopcorn .38s ease-in-out infinite alternate;
-}
-
+#resultOverlay.phase-munch 
 #resultOverlay.phase-magic #resultMagic,
 #resultOverlay.phase-flower #resultMagic,
 #resultOverlay.phase-text #resultMagic,
@@ -579,8 +555,6 @@ button:active{transform:translateY(1px)}
   from{transform:translateY(0) rotate(-1deg) scale(1)}
   to{transform:translateY(3px) rotate(1deg) scale(.985)}
 }
-@keyframes resultPopcorn{
-  from{transform:translateY(1px) rotate(-5deg) scale(.94)}
   to{transform:translateY(-4px) rotate(5deg) scale(1.02)}
 }
 @keyframes resultMagicHiyo{
@@ -600,6 +574,23 @@ button:active{transform:translateY(1px)}
 @keyframes resultTextIn{
   from{opacity:0;transform:translateY(8px)}
   to{opacity:1;transform:translateY(0)}
+}
+
+
+/* v0.7.2 result character image phases */
+#resultOverlay.phase-munch #resultHiyo{
+  animation:resultMunch .38s ease-in-out infinite alternate;
+}
+#resultOverlay.phase-magic #resultHiyo{
+  animation:resultMagicHiyo .75s ease-in-out infinite alternate;
+}
+#resultOverlay.phase-flower #resultHiyo{
+  animation:resultMagicHiyo .75s ease-in-out infinite alternate;
+}
+#resultOverlay.phase-text #resultHiyo,
+#resultOverlay.phase-done #resultHiyo{
+  animation:none;
+  transform:translateY(0) scale(1);
 }
 
 </style>
@@ -657,9 +648,7 @@ button:active{transform:translateY(1px)}
       <div id="resultScene">
         <div id="resultTop">
           <div id="resultHiyoWrap">
-            <img id="resultHiyo" src="hiyomaru_idle.png" alt="ひよまるくん">
-            <div id="munchFace">＞＜</div>
-            <div id="resultPopcorn">🍿</div>
+            <img id="resultHiyo" src="hiyomaru_result_munch.png" alt="ひよまるくん">
           </div>
         </div>
 
@@ -747,6 +736,10 @@ button:active{transform:translateY(1px)}
     sparkle: "hiyomaru_sparkle.png"
   };
   Object.values(SPRITES).forEach(src => {
+    const img = new Image();
+    img.src = src;
+  });
+  ["hiyomaru_result_munch.png","hiyomaru_result_happy.png","popcorn_result.png"].forEach(src=>{
     const img = new Image();
     img.src = src;
   });
@@ -1095,16 +1088,18 @@ button:active{transform:translateY(1px)}
     resultFlower.textContent = flower;
     resultText.textContent = "";
     resultHint.style.opacity = "0";
-    resultHiyo.src = SPRITES.idle;
     retryBtn.classList.remove("show");
 
     resultOverlay.style.display = "grid";
 
     // 0.0–2.0秒：もぐもぐ
+    resultHiyo.src = "hiyomaru_result_munch.png";
     resultPhase("munch");
     await wait(2000);
 
     // 2.0–3.5秒：シャラララーン
+    // ここで通常より浮いた感じのキャピ笑顔へ切り替える
+    resultHiyo.src = "hiyomaru_result_happy.png";
     resultPhase("magic");
     await wait(1500);
 
@@ -1112,12 +1107,13 @@ button:active{transform:translateY(1px)}
     resultPhase("flower");
     await wait(1500);
 
-    // 5.0–6.0秒：花の名前
+    // 5.0–6.0秒：花の名前を表示
     resultText.textContent = name + "が咲いたよ！";
     resultPhase("text");
     await wait(1000);
 
-    // 6.0秒以降：スクショ用の静止画
+    // 6.0秒以降：キャピ笑顔＋花＋結果文で静止
+    resultHiyo.src = "hiyomaru_result_happy.png";
     resultPhase("done");
     retryBtn.classList.add("show");
   }
