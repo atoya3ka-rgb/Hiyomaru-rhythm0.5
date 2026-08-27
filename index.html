@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ひよまるくん リズムゲーム試作 v0.6.2.2.1</title>
+<title>ひよまるくん リズムゲーム試作 v0.7.0</title>
 <style>
 :root{
   --ink:#5a5c86;
@@ -407,6 +407,201 @@ button:active{transform:translateY(1px)}
   100%{opacity:.85;transform:scale(1)}
 }
 
+
+/* ===== v0.7.0 リザルト演出 ===== */
+#resultOverlay{
+  display:none;
+  background:
+    radial-gradient(circle at 50% 45%,rgba(255,255,255,.98) 0 34%,rgba(249,244,255,.97) 68%,rgba(235,242,255,.96) 100%);
+  backdrop-filter:none;
+  overflow:hidden;
+}
+#resultScene{
+  position:absolute;
+  inset:0;
+  display:grid;
+  grid-template-rows:42% 37% 13% 8%;
+  place-items:center;
+  padding:5% 7% 4%;
+  box-sizing:border-box;
+  overflow:hidden;
+}
+#resultTop{
+  width:100%;
+  height:100%;
+  display:grid;
+  place-items:end center;
+}
+#resultHiyoWrap{
+  position:relative;
+  width:34%;
+  min-width:106px;
+  max-width:190px;
+  aspect-ratio:1/1;
+}
+#resultHiyo{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  filter:drop-shadow(0 6px 7px rgba(72,82,135,.14));
+}
+#munchFace{
+  position:absolute;
+  left:50%;
+  top:43%;
+  transform:translate(-50%,-50%);
+  font-size:clamp(13px,3.8vw,21px);
+  font-weight:1000;
+  color:#596273;
+  letter-spacing:.48em;
+  padding-left:.48em;
+  opacity:0;
+  text-shadow:0 1px 2px #fff;
+}
+#resultPopcorn{
+  position:absolute;
+  right:-9%;
+  bottom:0;
+  font-size:clamp(32px,9vw,54px);
+  opacity:0;
+}
+#resultFlower{
+  width:55%;
+  max-width:275px;
+  min-height:100%;
+  display:grid;
+  place-items:center;
+  text-align:center;
+  font-size:clamp(70px,22vw,138px);
+  line-height:1;
+  opacity:0;
+  transform:scale(.25) translateY(8px);
+  filter:drop-shadow(0 8px 8px rgba(77,86,135,.13));
+  z-index:3;
+}
+#resultText{
+  width:94%;
+  text-align:center;
+  font-size:clamp(19px,5.5vw,29px);
+  font-weight:1000;
+  color:#636da8;
+  letter-spacing:.02em;
+  opacity:0;
+  transform:translateY(7px);
+  z-index:4;
+}
+#resultHint{
+  align-self:start;
+  font-size:clamp(10px,2.8vw,14px);
+  font-weight:700;
+  color:#9a93b6;
+  opacity:0;
+  z-index:4;
+}
+#resultMagic{
+  position:absolute;
+  inset:13% 8% 18%;
+  pointer-events:none;
+  opacity:0;
+  z-index:2;
+}
+#resultMagic span{
+  position:absolute;
+  color:#fff5a5;
+  font-size:clamp(20px,6vw,38px);
+  opacity:0;
+  text-shadow:0 0 7px #fff,0 0 15px #9ce9ff,0 0 22px #ffc5e2;
+}
+#resultMagic span:nth-child(1){left:10%;top:25%}
+#resultMagic span:nth-child(2){left:25%;top:7%}
+#resultMagic span:nth-child(3){left:48%;top:2%}
+#resultMagic span:nth-child(4){right:16%;top:18%}
+#resultMagic span:nth-child(5){right:8%;top:49%}
+#resultMagic span:nth-child(6){right:26%;bottom:8%}
+#resultMagic span:nth-child(7){left:20%;bottom:14%}
+#resultMagic span:nth-child(8){left:8%;top:53%}
+
+#resultOverlay.phase-munch #resultPopcorn,
+#resultOverlay.phase-munch #munchFace{opacity:1}
+#resultOverlay.phase-munch #resultHiyo{
+  animation:resultMunch .38s ease-in-out infinite alternate;
+}
+#resultOverlay.phase-munch #resultPopcorn{
+  animation:resultPopcorn .38s ease-in-out infinite alternate;
+}
+
+#resultOverlay.phase-magic #resultMagic,
+#resultOverlay.phase-flower #resultMagic,
+#resultOverlay.phase-text #resultMagic,
+#resultOverlay.phase-done #resultMagic{opacity:1}
+#resultOverlay.phase-magic #resultMagic span{
+  animation:resultStar 1.15s ease-out infinite;
+}
+#resultOverlay.phase-magic #resultMagic span:nth-child(2),
+#resultOverlay.phase-magic #resultMagic span:nth-child(6){animation-delay:.14s}
+#resultOverlay.phase-magic #resultMagic span:nth-child(3),
+#resultOverlay.phase-magic #resultMagic span:nth-child(7){animation-delay:.28s}
+#resultOverlay.phase-magic #resultHiyo{
+  animation:resultMagicHiyo .75s ease-in-out infinite alternate;
+}
+#resultOverlay.phase-flower #resultFlower{
+  animation:resultFlowerIn 1.4s cubic-bezier(.16,.84,.25,1.16) forwards;
+}
+#resultOverlay.phase-flower #resultMagic span{
+  animation:resultStar 1.1s ease-out infinite;
+}
+#resultOverlay.phase-text #resultFlower,
+#resultOverlay.phase-done #resultFlower{
+  opacity:1;
+  transform:scale(1) translateY(0);
+}
+#resultOverlay.phase-text #resultText{
+  animation:resultTextIn .72s ease forwards;
+}
+#resultOverlay.phase-done #resultText,
+#resultOverlay.phase-done #resultHint{
+  opacity:1;
+  transform:none;
+}
+#resultOverlay.phase-done #resultMagic span{opacity:.6}
+
+.retryOutside{
+  display:none;
+  margin:9px auto 0;
+  padding:10px 20px;
+  font-size:14px;
+  box-shadow:0 6px 14px #7aa9ff33;
+}
+.retryOutside.show{display:block}
+
+@keyframes resultMunch{
+  from{transform:translateY(0) rotate(-1deg) scale(1)}
+  to{transform:translateY(3px) rotate(1deg) scale(.985)}
+}
+@keyframes resultPopcorn{
+  from{transform:translateY(1px) rotate(-5deg) scale(.94)}
+  to{transform:translateY(-4px) rotate(5deg) scale(1.02)}
+}
+@keyframes resultMagicHiyo{
+  from{transform:translateY(0) scale(1)}
+  to{transform:translateY(-5px) scale(1.025)}
+}
+@keyframes resultStar{
+  0%{opacity:0;transform:translateY(12px) rotate(0) scale(.45)}
+  32%{opacity:1}
+  100%{opacity:0;transform:translateY(-18px) rotate(24deg) scale(1.35)}
+}
+@keyframes resultFlowerIn{
+  0%{opacity:0;transform:scale(.22) translateY(10px) rotate(-8deg)}
+  62%{opacity:1;transform:scale(1.11) translateY(-3px) rotate(2deg)}
+  100%{opacity:1;transform:scale(1) translateY(0) rotate(0)}
+}
+@keyframes resultTextIn{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
 </style>
 </head>
 <body>
@@ -454,21 +649,33 @@ button:active{transform:translateY(1px)}
         <p>「3・2・1・GO!」のあと、外から飛んでくる矢印が十字キーに重なったらタップ。<br>
         PCなら矢印キーでも遊べます。</p>
         <button id="startBtn">▶ 60秒試してみる</button>
-        <div class="smallnote">※背景4面とBGMは本番候補素材を実装済み。ひよまる・効果音・リザルトはまだボーン版です。</div>
+        <div class="smallnote">※背景・BGM・ひよまるモーション実装済み。リザルト演出は試作版です。</div>
       </div>
     </div>
 
     <div id="resultOverlay">
-      <div class="card">
-        <h2>おつかれさま！</h2>
-        <div class="popcorn">🍿</div>
-        <p>もぐもぐ……</p>
-        <div class="flower" id="flowerResult">🌼</div>
-        <p id="resultText">ふつうのお花が咲いた！</p>
-        <button id="retryBtn">もう一回あそぶ</button>
+      <div id="resultScene">
+        <div id="resultTop">
+          <div id="resultHiyoWrap">
+            <img id="resultHiyo" src="hiyomaru_idle.png" alt="ひよまるくん">
+            <div id="munchFace">＞＜</div>
+            <div id="resultPopcorn">🍿</div>
+          </div>
+        </div>
+
+        <div id="resultMagic" aria-hidden="true">
+          <span>✦</span><span>✧</span><span>★</span><span>✦</span>
+          <span>✧</span><span>★</span><span>✦</span><span>✧</span>
+        </div>
+
+        <div id="resultFlower">🌼</div>
+        <div id="resultText">お花が咲いたよ！</div>
+        <div id="resultHint">スクショして見せてね ♪</div>
       </div>
     </div>
   </div>
+
+  <button id="retryBtn" class="retryOutside">↻ もう一回あそぶ</button>
 </div>
 
 <!-- BGM must exist in the DOM before the game script reads #bgm. -->
@@ -561,8 +768,10 @@ button:active{transform:translateY(1px)}
   };
   const startOverlay = document.getElementById("startOverlay");
   const resultOverlay = document.getElementById("resultOverlay");
-  const flowerResult = document.getElementById("flowerResult");
+  const resultHiyo = document.getElementById("resultHiyo");
+  const resultFlower = document.getElementById("resultFlower");
   const resultText = document.getElementById("resultText");
+  const resultHint = document.getElementById("resultHint");
   const startBtn = document.getElementById("startBtn");
   const retryBtn = document.getElementById("retryBtn");
   const bgm = document.getElementById("bgm");
@@ -866,22 +1075,60 @@ button:active{transform:translateY(1px)}
 
   function chooseFlower(){
     const total = totalHits + totalMiss;
-    const ratio = total ? totalHits/total : 0;
-    if(ratio>.88) return ["⭐","おほしさまのお花が咲いた！"];
-    if(ratio>.76) return ["🌙","お月さまのお花が咲いた！"];
-    if(ratio>.62) return ["💗","ハートのお花が咲いた！"];
-    if(ratio>.45) return ["🌻","大きなひまわりが咲いた！"];
-    return ["🌼🌷🌼","小さなお花がいっぱい咲いた！"];
+    const ratio = total ? totalHits / total : 0;
+
+    // 全ミスでも、ちゃんとお花は咲く。
+    if(ratio >= .92) return ["🌻","大きなひまわり"];
+    if(ratio >= .80) return ["⭐🌼⭐","おほしさまの花"];
+    if(ratio >= .65) return ["🌙🌸","お月さまの花"];
+    if(ratio >= .45) return ["💗🌸💗","ハートの花"];
+    return ["🌼🌷🌼","ちいさなお花"];
+  }
+
+  function resultPhase(name){
+    resultOverlay.className = name ? "phase-" + name : "";
+  }
+
+  async function playResultSequence(){
+    const [flower,name] = chooseFlower();
+
+    resultFlower.textContent = flower;
+    resultText.textContent = "";
+    resultHint.style.opacity = "0";
+    resultHiyo.src = SPRITES.idle;
+    retryBtn.classList.remove("show");
+
+    resultOverlay.style.display = "grid";
+
+    // 0.0–2.0秒：もぐもぐ
+    resultPhase("munch");
+    await wait(2000);
+
+    // 2.0–3.5秒：シャラララーン
+    resultPhase("magic");
+    await wait(1500);
+
+    // 3.5–5.0秒：キラキラの中から花
+    resultPhase("flower");
+    await wait(1500);
+
+    // 5.0–6.0秒：花の名前
+    resultText.textContent = name + "が咲いたよ！";
+    resultPhase("text");
+    await wait(1000);
+
+    // 6.0秒以降：スクショ用の静止画
+    resultPhase("done");
+    retryBtn.classList.add("show");
   }
 
   function finish(){
     running=false;
     cancelAnimationFrame(raf);
+    clearTimers();
+    document.querySelectorAll(".note").forEach(n=>n.remove());
     if(bgm){ bgm.pause(); bgm.currentTime = 0; }
-    const [flower,text] = chooseFlower();
-    flowerResult.textContent=flower;
-    resultText.textContent=text;
-    resultOverlay.style.display="grid";
+    playResultSequence();
   }
 
   function resetGame(){
@@ -901,7 +1148,9 @@ button:active{transform:translateY(1px)}
     timerLabel.textContent="0.0 / 60.0";
     setStage(0);
     feedback.className="";
+    resultPhase("");
     resultOverlay.style.display="none";
+    retryBtn.classList.remove("show");
     if(bgm){ bgm.pause(); bgm.currentTime = 0; }
   }
 
