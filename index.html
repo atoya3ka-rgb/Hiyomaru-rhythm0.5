@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ひよまるくん リズムゲーム試作 v0.6.1.2.1</title>
+<title>ひよまるくん リズムゲーム試作 v0.6.2.2.1</title>
 <style>
 :root{
   --ink:#5a5c86;
@@ -244,7 +244,7 @@ button:active{transform:translateY(1px)}
 }
 
 
-/* ===== v0.6.1 本番候補背景 ===== */
+/* ===== v0.6.2 本番候補背景 ===== */
 #sceneLayer{
   background-position:center center !important;
   background-size:cover !important;
@@ -275,7 +275,7 @@ button:active{transform:translateY(1px)}
 }
 
 
-/* ===== v0.6.1.2 GitHub Pages absolute-background fix ===== */
+/* ===== v0.6.2.2 GitHub Pages absolute-background fix ===== */
 #sceneLayer.scene-room {
   background: url("bg_room.png") center center / cover no-repeat !important;
 }
@@ -331,7 +331,7 @@ button:active{transform:translateY(1px)}
 
 
 
-/* ===== v0.6.1 本番ひよまる PNGモーション ===== */
+/* ===== v0.6.2 本番ひよまる PNGモーション ===== */
 #characterWrap{
   width:31%;
   min-width:118px;
@@ -379,7 +379,7 @@ button:active{transform:translateY(1px)}
 }
 
 
-/* v0.6.1: success sparkle linger */
+/* v0.6.2: success sparkle linger */
 #fx{
   transition:opacity .14s ease;
 }
@@ -387,12 +387,32 @@ button:active{transform:translateY(1px)}
   animation-duration:.62s !important;
 }
 
+
+/* v0.6.2: long sparkle combo pulse */
+#character.sparkle-pulse{
+  animation:hiyoSparklePulse .24s ease;
+}
+@keyframes hiyoSparklePulse{
+  0%,100%{transform:translateY(-7px) scale(1.02)}
+  25%{transform:translateX(-3px) translateY(-7px) rotate(-2deg) scale(1.025)}
+  55%{transform:translateX(3px) translateY(-8px) rotate(2deg) scale(1.035)}
+  80%{transform:translateX(-1px) translateY(-7px) rotate(-1deg) scale(1.025)}
+}
+#fx.pulse .spark{
+  animation:hiyoFxPulse .34s ease !important;
+}
+@keyframes hiyoFxPulse{
+  0%{opacity:0;transform:scale(.55)}
+  35%{opacity:1;transform:scale(1.25)}
+  100%{opacity:.85;transform:scale(1)}
+}
+
 </style>
 </head>
 <body>
 <div id="app">
   <div class="topbar">
-    <div class="title">ひよまるくん リズムゲーム試作 v0.6.1.2.1</div>
+    <div class="title">ひよまるくん リズムゲーム試作 v0.6.2.2.1</div>
     <div class="meta">
       <span class="badge">コンパクト正方形UI</span><span class="badge">4面 × 15秒</span>
       <span class="badge">BGM v1入り</span>
@@ -528,6 +548,8 @@ button:active{transform:translateY(1px)}
   let spriteResetTimer = 0;
   let sparkleHoldUntil = 0;
   const SPARKLE_HOLD_MS = 620;
+  const SPARKLE_PULSE_EVERY = 3;
+  let sparkleSuccessCount = 0;
   const charWrap = document.getElementById("characterWrap");
   const fx = document.getElementById("fx");
   const feedback = document.getElementById("feedback");
@@ -572,7 +594,7 @@ button:active{transform:translateY(1px)}
   }
 
   function makeDecor(stage){
-    // v0.6.1: 背景は本番候補の画像素材で描画するため、旧ボーン小物は使わない。
+    // v0.6.2: 背景は本番候補の画像素材で描画するため、旧ボーン小物は使わない。
     scene.innerHTML = "";
   }
 
@@ -671,10 +693,32 @@ button:active{transform:translateY(1px)}
 
       setHiyoSprite(SPRITES.idle);
       character.style.transform = "";
-      character.classList.remove("sprite-pop","sprite-miss");
+      character.classList.remove("sprite-pop","sprite-miss","sparkle-pulse");
+      fx.classList.remove("pulse");
       fx.style.opacity = "0";
       charWrap.style.filter = "";
     }, actualDelay);
+  }
+
+
+  function pulseSparkle(){
+    if(!character || !fx) return;
+
+    character.classList.remove("sparkle-pulse");
+    fx.classList.remove("pulse");
+    void character.offsetWidth;
+    void fx.offsetWidth;
+
+    character.classList.add("sparkle-pulse");
+    fx.classList.add("pulse");
+    fx.style.opacity = "1";
+    charWrap.style.filter =
+      "drop-shadow(0 0 14px #fff) drop-shadow(0 0 24px #9ee8ff)";
+
+    setTimeout(()=>{
+      character.classList.remove("sparkle-pulse");
+      fx.classList.remove("pulse");
+    }, 360);
   }
 
   function animateCharacter(dir, success=true){
@@ -684,6 +728,7 @@ button:active{transform:translateY(1px)}
 
     if(!success){
       sparkleHoldUntil = 0;
+      sparkleSuccessCount = 0;
       setHiyoSprite(SPRITES.idle);
       character.style.transform = "";
       character.classList.add("sprite-miss");
@@ -692,9 +737,18 @@ button:active{transform:translateY(1px)}
     }
 
     if(performance.now() < sparkleHoldUntil){
+      sparkleSuccessCount++;
       fx.style.opacity = "1";
       charWrap.style.filter =
         "drop-shadow(0 0 12px #fff) drop-shadow(0 0 20px #9ee8ff)";
+
+      if(sparkleSuccessCount % SPARKLE_PULSE_EVERY === 0){
+        pulseSparkle();
+      }
+
+      // 成功が続く限り、きらっ状態を少し先へ延長
+      sparkleHoldUntil = performance.now() + SPARKLE_HOLD_MS;
+      resetHiyoSoon(SPARKLE_HOLD_MS);
       return;
     }
 
@@ -731,6 +785,7 @@ button:active{transform:translateY(1px)}
     if(streak >= 3){
       timers.push(setTimeout(()=>{
         sparkleHoldUntil = performance.now() + SPARKLE_HOLD_MS;
+        sparkleSuccessCount = 0;
         setHiyoSprite(SPRITES.sparkle);
         character.style.transform = "translateY(-7px) scale(1.02)";
         fx.style.opacity = "1";
@@ -832,6 +887,7 @@ button:active{transform:translateY(1px)}
   function resetGame(){
     clearTimeout(spriteResetTimer);
     sparkleHoldUntil = 0;
+    sparkleSuccessCount = 0;
     setHiyoSprite(SPRITES.idle);
     character.style.transform = "";
     character.classList.remove("sprite-pop","sprite-miss");
