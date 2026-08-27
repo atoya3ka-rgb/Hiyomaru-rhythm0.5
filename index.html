@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ひよまるくん リズムゲーム試作 v0.6.0.2.1</title>
+<title>ひよまるくん リズムゲーム試作 v0.6.1.2.1</title>
 <style>
 :root{
   --ink:#5a5c86;
@@ -244,7 +244,7 @@ button:active{transform:translateY(1px)}
 }
 
 
-/* ===== v0.6.0 本番候補背景 ===== */
+/* ===== v0.6.1 本番候補背景 ===== */
 #sceneLayer{
   background-position:center center !important;
   background-size:cover !important;
@@ -275,7 +275,7 @@ button:active{transform:translateY(1px)}
 }
 
 
-/* ===== v0.6.0.2 GitHub Pages absolute-background fix ===== */
+/* ===== v0.6.1.2 GitHub Pages absolute-background fix ===== */
 #sceneLayer.scene-room {
   background: url("bg_room.png") center center / cover no-repeat !important;
 }
@@ -331,7 +331,7 @@ button:active{transform:translateY(1px)}
 
 
 
-/* ===== v0.6.0 本番ひよまる PNGモーション ===== */
+/* ===== v0.6.1 本番ひよまる PNGモーション ===== */
 #characterWrap{
   width:31%;
   min-width:118px;
@@ -378,12 +378,21 @@ button:active{transform:translateY(1px)}
   #characterWrap{width:29%;min-width:94px;bottom:18%}
 }
 
+
+/* v0.6.1: success sparkle linger */
+#fx{
+  transition:opacity .14s ease;
+}
+#fx .spark{
+  animation-duration:.62s !important;
+}
+
 </style>
 </head>
 <body>
 <div id="app">
   <div class="topbar">
-    <div class="title">ひよまるくん リズムゲーム試作 v0.6.0.2.1</div>
+    <div class="title">ひよまるくん リズムゲーム試作 v0.6.1.2.1</div>
     <div class="meta">
       <span class="badge">コンパクト正方形UI</span><span class="badge">4面 × 15秒</span>
       <span class="badge">BGM v1入り</span>
@@ -517,6 +526,8 @@ button:active{transform:translateY(1px)}
   let lastSpriteDir = "";
   let sameDirCount = 0;
   let spriteResetTimer = 0;
+  let sparkleHoldUntil = 0;
+  const SPARKLE_HOLD_MS = 620;
   const charWrap = document.getElementById("characterWrap");
   const fx = document.getElementById("fx");
   const feedback = document.getElementById("feedback");
@@ -561,7 +572,7 @@ button:active{transform:translateY(1px)}
   }
 
   function makeDecor(stage){
-    // v0.6.0: 背景は本番候補の画像素材で描画するため、旧ボーン小物は使わない。
+    // v0.6.1: 背景は本番候補の画像素材で描画するため、旧ボーン小物は使わない。
     scene.innerHTML = "";
   }
 
@@ -645,13 +656,25 @@ button:active{transform:translateY(1px)}
 
   function resetHiyoSoon(delay=190){
     clearTimeout(spriteResetTimer);
+
+    const now = performance.now();
+    const holdRemaining = Math.max(0, sparkleHoldUntil - now);
+    const actualDelay = Math.max(delay, holdRemaining);
+
     spriteResetTimer = setTimeout(()=>{
+      // きらっ保持中に新しい入力が来ても、保持時間までは戻さない
+      const remain = Math.max(0, sparkleHoldUntil - performance.now());
+      if(remain > 0){
+        resetHiyoSoon(remain);
+        return;
+      }
+
       setHiyoSprite(SPRITES.idle);
       character.style.transform = "";
       character.classList.remove("sprite-pop","sprite-miss");
       fx.style.opacity = "0";
       charWrap.style.filter = "";
-    }, delay);
+    }, actualDelay);
   }
 
   function animateCharacter(dir, success=true){
@@ -660,10 +683,18 @@ button:active{transform:translateY(1px)}
     void character.offsetWidth;
 
     if(!success){
+      sparkleHoldUntil = 0;
       setHiyoSprite(SPRITES.idle);
       character.style.transform = "";
       character.classList.add("sprite-miss");
       resetHiyoSoon(230);
+      return;
+    }
+
+    if(performance.now() < sparkleHoldUntil){
+      fx.style.opacity = "1";
+      charWrap.style.filter =
+        "drop-shadow(0 0 12px #fff) drop-shadow(0 0 20px #9ee8ff)";
       return;
     }
 
@@ -699,11 +730,16 @@ button:active{transform:translateY(1px)}
 
     if(streak >= 3){
       timers.push(setTimeout(()=>{
+        sparkleHoldUntil = performance.now() + SPARKLE_HOLD_MS;
         setHiyoSprite(SPRITES.sparkle);
         character.style.transform = "translateY(-7px) scale(1.02)";
         fx.style.opacity = "1";
+        charWrap.style.filter =
+          "drop-shadow(0 0 12px #fff) drop-shadow(0 0 20px #9ee8ff)";
       }, 95));
-      resetHiyoSoon(245);
+
+      // きらっポーズを約3モーション分キープ
+      resetHiyoSoon(95 + SPARKLE_HOLD_MS);
     }else{
       fx.style.opacity = "1";
       resetHiyoSoon(195);
@@ -795,6 +831,7 @@ button:active{transform:translateY(1px)}
 
   function resetGame(){
     clearTimeout(spriteResetTimer);
+    sparkleHoldUntil = 0;
     setHiyoSprite(SPRITES.idle);
     character.style.transform = "";
     character.classList.remove("sprite-pop","sprite-miss");
